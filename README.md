@@ -15,6 +15,7 @@
   - [Getting started](#getting-started)
     - [Prerequisites](#prerequisites)
     - [Connection settings](#connection-settings)
+  - [Correlation configuration](#correlation-configuration)
     - [Available Lifecycle Actions](#available-lifecycle-actions)
     - [CSV structure](#csv-structure)
   - [Remarks](#remarks)
@@ -43,6 +44,10 @@ The following settings are required to connect to the CSV file.
 | Delimiter              | Delimiter used in the file (e.g. `,`)                                                                                                     | Yes       |
 | Encoding               | Encoding used (e.g. `utf-8`, `ascii`)                                                                                                     | Yes       |
 | RetentionPeriod (days) | Retention period in days. This is the number of days the value should remain blocked after deletion. Use `999999` for no retention limit. | Yes       |
+
+## Correlation configuration
+
+The correlation configuration is not used or required in this connector
 
 ### Available Lifecycle Actions
 
