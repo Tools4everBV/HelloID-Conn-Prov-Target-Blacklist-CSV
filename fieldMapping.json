@@ -1,0 +1,76 @@
+{
+  "Version": "v1",
+  "MappingFields": [
+    {
+      "Name": "employeeId",
+      "Description": "[Required]",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create"
+          ],
+          "MappingMode": "Field",
+          "Value": "\"Person.ExternalId\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": true
+        }
+      ]
+    },
+    {
+      "Name": "Mail",
+      "Description": "[Optional]\nIf provided, this field should always be selected for all actions: Create, Update and Delete.",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update",
+            "Delete"
+          ],
+          "MappingMode": "Complex",
+          "Value": "\"function getMail() {\\r\\n    let mail = Person.Accounts.MicrosoftActiveDirectory.mail;\\r\\n    \\r\\n    return mail;\\r\\n}\\r\\n\\r\\n// Check if Person data is available\\r\\nif(Person.ExternalId){\\r\\n    getMail();\\r\\n}\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": true
+        }
+      ]
+    },
+    {
+      "Name": "SamAccountName",
+      "Description": "[Optional]\nIf provided, this field should always be selected for all actions: Create, Update and Delete.",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update",
+            "Delete"
+          ],
+          "MappingMode": "Complex",
+          "Value": "\"function getSAMAccountName() {\\r\\n    let sAMAccountName = Person.Accounts.MicrosoftActiveDirectory.sAMAccountName;\\r\\n    \\r\\n    return sAMAccountName;\\r\\n}\\r\\n\\r\\n// Check if Person data is available\\r\\nif(Person.ExternalId){\\r\\n    getSAMAccountName();\\r\\n}\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": true
+        }
+      ]
+    },
+    {
+      "Name": "UserPrincipalName",
+      "Description": "[Optional]\nIf provided, this field should always be selected for all actions: Create, Update and Delete.",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update",
+            "Delete"
+          ],
+          "MappingMode": "Complex",
+          "Value": "\"function getUserPrincipalName() {\\r\\n    let userPrincipalName = Person.Accounts.MicrosoftActiveDirectory.userPrincipalName;\\r\\n    \\r\\n    return userPrincipalName;\\r\\n}\\r\\n\\r\\n// Check if Person data is available\\r\\nif(Person.ExternalId){\\r\\n    getUserPrincipalName();\\r\\n}\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": true
+        }
+      ]
+    }
+  ],
+  "UniqueFieldNames": []
+}
