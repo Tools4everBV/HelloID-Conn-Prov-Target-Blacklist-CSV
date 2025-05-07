@@ -31,6 +31,7 @@ _HelloID-Conn-Prov-Target-Blacklist-CSV_ is a target connector that writes user 
 
 - HelloID Agent running On-Premises
 - Write access to a shared location for storing the blacklist CSV file
+- **Concurrent actions should be set to 1** to avoid file locking or accidental overwrites
 
 ### Connection settings
 
