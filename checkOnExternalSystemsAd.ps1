@@ -11,7 +11,7 @@ $aRef = $accountReference | ConvertFrom-Json
 # The entitlementContext contains the configuration
 # - configuration: The configuration that is set in the Custom PowerShell configuration
 $eRef = $entitlementContext | ConvertFrom-Json
-$eRef.configuration.CsvPath = "C:\HelloID\blocklistv2.csv"
+
 # Operation is a script parameter which contains the action HelloID wants to perform for this entitlement
 # It has one of the following values: "create", "enable", "update", "disable", "delete"
 $o = $operation | ConvertFrom-Json
