@@ -9,10 +9,13 @@
 
 $attributeNames = $($actionContext.Data | Select-Object * -ExcludeProperty employeeId, whenDeleted).PSObject.Properties.Name
 
-# Set AccountReference to employeeId at the top level, since it's always the current person's employeeId — no need to set it within a specific action
-$outputContext.AccountReference = $actionContext.Data.employeeId
-
 try {
+    # Verify account reference
+    $actionMessage = "verifying account reference"
+    if ([string]::IsNullOrEmpty($($actionContext.References.Account))) {
+        throw "The account reference could not be found"
+    }
+
     # Import CSV data
     $actionMessage = "importing data from CSV file at path [$($actionContext.Configuration.CsvPath)]"
 
@@ -41,7 +44,7 @@ try {
 
         # If multiple rows are found, filter additionally for employeeId
         if (($csvCurrentRow | Measure-Object).count -gt 1) {
-            $csvCurrentRow = $csvCurrentRow | Where-Object { $_.employeeId -eq $actionContext.Data.employeeId }
+            $csvCurrentRow = $csvCurrentRow | Where-Object { $_.employeeId -eq $actionContext.References.Account }
         
             Write-Information "Multiple CSV rows found where [$($attributeName)] = [$($actionContext.Data.$attributeName)]. Filtered additionally for employeeId. Result count: $(($csvCurrentRow | Measure-Object).Count)"
         }
@@ -50,7 +53,7 @@ try {
             $action = "Create"
         }
         elseif (($csvCurrentRow | Measure-Object).count -eq 1) {
-            if ($csvCurrentRow.employeeId -ne $actionContext.Data.employeeId) {
+            if ($csvCurrentRow.employeeId -ne $actionContext.References.Account) {
                 if (-NOT [string]::isNullOrEmpty($csvCurrentRow.whenDeleted)) {
                     $whenDeletedDate = [datetime]($csvCurrentRow.whendeleted)
                     $daysDiff = (New-TimeSpan -Start $whenDeletedDate -End (Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ")).days
@@ -82,7 +85,7 @@ try {
         switch ($action) {
             "Create" {
                 # Create CSV row
-                $actionMessage = "creating CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.Data.employeeId)]"
+                $actionMessage = "creating CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.References.Account)]"
 
                 # Create custom updated CSV object
                 $updatedCsvContent = $null
@@ -100,7 +103,7 @@ try {
                 $newRowObject = [PSCustomObject]@{
                     attributeName  = $attributeName
                     attributeValue = $actionContext.Data.$attributeName
-                    employeeId     = $actionContext.Data.employeeId
+                    employeeId     = $actionContext.References.Account
                     whenDeleted    = ''
                     whenUpdated    = ''
                     whenCreated    = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
@@ -122,7 +125,7 @@ try {
 
                     $outputContext.AuditLogs.Add([PSCustomObject]@{
                             # Action  = "" # Optional
-                            Message = "Created row in CSV where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.Data.employeeId)]."
+                            Message = "Created row in CSV where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.References.Account)]."
                             IsError = $false
                         })
 
@@ -132,7 +135,7 @@ try {
                     Write-Information "Imported updated data from CSV file at path [$($actionContext.Configuration.CsvPath)]. Result count: $(($csvContent | Measure-Object).Count)"
                 }
                 else {
-                    Write-Warning "DryRun: Would create row in CSV [$($exportCsvSplatParams.Path)] where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.Data.employeeId)]."
+                    Write-Warning "DryRun: Would create row in CSV [$($exportCsvSplatParams.Path)] where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.References.Account)]."
                 }
 
                 break
@@ -140,7 +143,7 @@ try {
 
             "Update" {
                 # Update CSV row
-                $actionMessage = "clearing [whenDeleted] for CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.Data.employeeId)]"
+                $actionMessage = "clearing [whenDeleted] for CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.References.Account)]"
 
                 # Create custom updated CSV object
                 $updatedCsvContent = $null
@@ -153,12 +156,12 @@ try {
                         )
                     }
                 )
-
+                
                 # Add new CSV row to custom updated CSV object
                 $newRowObject = [PSCustomObject]@{
                     attributeName  = $attributeName
                     attributeValue = $actionContext.Data.$attributeName
-                    employeeId     = $actionContext.Data.employeeId
+                    employeeId     = $actionContext.References.Account
                     whenDeleted    = ''
                     whenUpdated    = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
                     whenCreated    = $csvCurrentRow.whenCreated
@@ -180,7 +183,7 @@ try {
 
                     $outputContext.AuditLogs.Add([PSCustomObject]@{
                             # Action  = "" # Optional
-                            Message = "Cleared [whenDeleted] for CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.Data.employeeId)]."
+                            Message = "Cleared [whenDeleted] for CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.References.Account)]."
                             IsError = $false
                         })
 
@@ -190,18 +193,18 @@ try {
                     Write-Information "Imported updated data from CSV file at path [$($actionContext.Configuration.CsvPath)]. Result count: $(($csvContent | Measure-Object).Count)"
                 }
                 else {
-                    Write-Warning "DryRun: Would clear [whenDeleted] for CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.Data.employeeId)]."
+                    Write-Warning "DryRun: Would clear [whenDeleted] for CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.References.Account)]."
                 }
 
                 break
             }
 
             "NoChanges" {
-                $actionMessage = "skipping updating CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.Data.employeeId)]"
+                $actionMessage = "skipping updating CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.References.Account)]"
 
                 $outputContext.AuditLogs.Add([PSCustomObject]@{
                         # Action  = "" # Optional
-                        Message = "Skipped updating CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.Data.employeeId)]. reason: No changes."
+                        Message = "Skipped updating CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.References.Account)]. reason: No changes."
                         IsError = $false
                     })
 
@@ -212,7 +215,7 @@ try {
                 $actionMessage = "updating CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)]"
 
                 # Throw terminal error
-                throw "A CSV row was found where [$($attributeName)] = [$($actionContext.Data.$attributeName)]. However the EmployeeID [$($csvCurrentRow.employeeId)] doesn't match the current person (expected: [$($actionContext.Data.employeeId)]). Additionally, [whenDeleted] = [$($csvCurrentRow.whenDeleted)] is still within the allowed threshold [$($actionContext.Configuration.RetentionPeriod) days]. This should not be possible. Please check the CSV file for inconsistencies."
+                throw "A CSV row was found where [$($attributeName)] = [$($actionContext.Data.$attributeName)]. However the EmployeeID [$($csvCurrentRow.employeeId)] doesn't match the current person (expected: [$($actionContext.References.Account)]). Additionally, [whenDeleted] = [$($csvCurrentRow.whenDeleted)] is still within the allowed threshold [$($actionContext.Configuration.RetentionPeriod) days]. This should not be possible. Please check the CSV file for inconsistencies."
 
                 break
             }
@@ -221,7 +224,7 @@ try {
                 $actionMessage = "updating CSV row where [$($attributeName)] = [$($actionContext.Data.$attributeName)]"
 
                 # Throw terminal error
-                throw "Multiple rows were found in the CSV file where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.Data.employeeId)]. This should not be possible. Please check the CSV file for inconsistencies."
+                throw "Multiple rows were found in the CSV file where [$($attributeName)] = [$($actionContext.Data.$attributeName)] AND [employeeID] = [$($actionContext.References.Account)]. This should not be possible. Please check the CSV file for inconsistencies."
 
                 break
             }
