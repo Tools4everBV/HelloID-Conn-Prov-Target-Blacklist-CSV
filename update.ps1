@@ -7,7 +7,7 @@
 # Enable TLS1.2
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::Tls12
 
-$attributeNames = $($actionContext.Data | Select-Object * -ExcludeProperty employeeId, whenDeleted).PSObject.Properties.Name
+$attributeNames = $($actionContext.Data | Select-Object * -ExcludeProperty employeeId).PSObject.Properties.Name
 
 try {
     # Verify account reference

@@ -7,7 +7,7 @@
 # Enable TLS1.2
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::Tls12
 
-$attributeNames = $($actionContext.Data | Select-Object * -ExcludeProperty employeeId, whenDeleted).PSObject.Properties.Name
+$attributeNames = $($actionContext.Data | Select-Object * -ExcludeProperty employeeId).PSObject.Properties.Name
 
 # Set AccountReference to employeeId at the top level, since it's always the current person's employeeId — no need to set it within a specific action
 $outputContext.AccountReference = $actionContext.Data.employeeId
