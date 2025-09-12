@@ -1,59 +1,96 @@
 # HelloID-Conn-Prov-Target-Blacklist-CSV
-Repository for HelloID Provisioning Target Connector to CSV Blacklist
 
-<a href="https://github.com/Tools4everBV/HelloID-Conn-Prov-Target-Blacklist-CSV/network/members"><img src="https://img.shields.io/github/forks/Tools4everBV/HelloID-Conn-Prov-Target-Blacklist-CSV" alt="Forks Badge"/></a>
-<a href="https://github.com/Tools4everBV/HelloID-Conn-Prov-Target-Blacklist-CSV/pulls"><img src="https://img.shields.io/github/issues-pr/Tools4everBV/HelloID-Conn-Prov-Target-Blacklist-CSV" alt="Pull Requests Badge"/></a>
-<a href="https://github.com/Tools4everBV/HelloID-Conn-Prov-Target-Blacklist-CSV/issues"><img src="https://img.shields.io/github/issues/Tools4everBV/HelloID-Conn-Prov-Target-Blacklist-CSV" alt="Issues Badge"/></a>
-<a href="https://github.com/Tools4everBV/HelloID-Conn-Prov-Target-Blacklist-CSV/graphs/contributors"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/Tools4everBV/HelloID-Conn-Prov-Target-Blacklist-CSV?color=2b9348"></a>
-
-| :information_source: Information |
-| :------------------------------- |
-| This repository contains the connector and configuration code only. The implementer is responsible to acquire the connection details such as username, password, certificate, etc. You might even need to sign a contract or agreement with the supplier before implementing this connector. Please contact the client's application manager to coordinate the connector requirements.  |
+> [!IMPORTANT]  
+> This repository contains the connector and configuration code only. The implementer is responsible to acquire the connection details such as username, password, certificate, etc. You might even need to sign a contract or agreement with the supplier before implementing this connector. Please contact the client's application manager to coordinate the connector requirements.
 
 <p align="center">
-  <img src="https://cdn-icons-png.flaticon.com/128/4443/4443857.png">
+  <img src="https://raw.githubusercontent.com/Tools4everBV/HelloID-Conn-Prov-Target-Blacklist-CSV/refs/heads/v2/Logo.png">
 </p>
 
-## Table of Contents
+## Table of contents
+
 - [HelloID-Conn-Prov-Target-Blacklist-CSV](#helloid-conn-prov-target-blacklist-csv)
-  - [Table of Contents](#table-of-contents)
-  - [Requirements](#requirements)
+  - [Table of contents](#table-of-contents)
   - [Introduction](#introduction)
+  - [Getting started](#getting-started)
+    - [Prerequisites](#prerequisites)
     - [Connection settings](#connection-settings)
+  - [Correlation configuration](#correlation-configuration)
+    - [Available Lifecycle Actions](#available-lifecycle-actions)
+    - [CSV structure](#csv-structure)
   - [Remarks](#remarks)
   - [Getting help](#getting-help)
   - [HelloID docs](#helloid-docs)
 
-## Requirements
-- Required to run **On-Premises**
-- CSV file
-
 ## Introduction
-With this connector we have the option to write unique values, e.g. SamAccountName and/or UserPrincipalName to a blacklist CSV file.
 
-The HelloID connector consists of the template scripts shown in the following table.
+_HelloID-Conn-Prov-Target-Blacklist-CSV_ is a target connector that writes user attribute values to a CSV-based blacklist. These values can later be used to prevent reuse, for example of `sAMAccountName`, `email`, or `UPN`.
 
-| Action                     | Action(s) Performed             | Comment                                                   |
-| -------------------------- | ------------------------------- | --------------------------------------------------------- |
-| create.ps1                 | Write account data to CSV       | Uses account data from another system like AD or Azure AD |
-| checkOnExternalSystems.ps1 | Check mapped fields against CSV | This is configured in the built-in AD connector           |
+## Getting started
+
+### Prerequisites
+
+- HelloID Agent running On-Premises
+- Write access to a shared location for storing the blacklist CSV file
+- **Concurrent actions should be set to 1** to avoid file locking or accidental overwrites
+- The CSV file should be **manually created** as HelloID does not create the file itself
+- The client is **responsible for populating the blacklist CSV with any previous data**. HelloID will only manage and add the data for the persons handled by provisioning.
+
 
 ### Connection settings
-The following settings are required to connect to CSV.
 
-| Setting       | Description                                   | Mandatory |
-| ------------- | --------------------------------------------- | --------- |
-| CSV File Path | String value of the path of the CSV file      | Yes       |
-| Delimiter     | String value of the delimiter of the CSV file | Yes       |
-| Encoding      | String value of the encoding of the CSV file  | Yes       |
+The following settings are required to connect to the CSV file.
+
+| Setting                | Description                                                                                                                               | Mandatory |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| CSV File Path          | Full path to the CSV file                                                                                                                 | Yes       |
+| Delimiter              | Delimiter used in the file (e.g. `,`)                                                                                                     | Yes       |
+| Encoding               | Encoding used (e.g. `utf-8`, `ascii`)                                                                                                     | Yes       |
+| RetentionPeriod (days) | Retention period in days. This is the number of days the value should remain blocked after deletion. Use `999999` for no retention limit. | Yes       |
+
+## Correlation configuration
+
+The correlation configuration is not used or required in this connector
+
+### Available Lifecycle Actions
+
+The following lifecycle actions are available in this connector:
+
+| Action                         | Description                                                                                                                                                                                                                                                                                                                                                                                                 | Comment                                                                                                   |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `create.ps1`                   | Adds account data to the blacklist CSV. A new row is added if the combination of attribute + employeeId doesn't exist, or if the attribute belongs to someone else but is outside the retention period. If the entry exists and is soft-deleted (i.e., `whenDeleted` is set), but the same person owns it and it's within the retention period, the `whenDeleted` field is cleared to reactivate the entry. | Uses account data from another system like AD or Entra ID.                                                |
+| `update.ps1`                   | Follows the same logic as `create.ps1`. The row is either added or restored based on ownership and retention policy.                                                                                                                                                                                                                                                                                        |                                                                                                           |
+| `delete.ps1`                   | Marks the value as soft-deleted by filling the `whenDeleted` field for any rows where it's still empty.                                                                                                                                                                                                                                                                                                     |                                                                                                           |
+| `checkOnExternalSystemsAd.ps1` | Verifies if attribute values exist in the blacklist. It checks the `whenDeleted` field to ensure the value is still within the retention period and determines if it should remain blocked.                                                                                                                                                                                                                 | Configured in the built-in AD connector.                                                                  |
+| `configuration.json`           | Contains connection settings and general configuration for the connector.                                                                                                                                                                                                                                                                                                                                   | This configuration can and should be used in both the CSV target connector and the built-in AD connector. |
+| `fieldMapping.json`            | Defines mappings between person fields and target system person account fields.                                                                                                                                                                                                                                                                                                                             |                                                                                                           |
+
+
+### CSV structure
+
+| Column           | Description                                                                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `employeeId`     | Unique ID from source system (usually HR)                                                                                                      |
+| `attributeName`  | The attribute name (e.g. `userPrincipalName`, `sAMAccountName`, or `mail`)                                                                     |
+| `attributeValue` | The attribute value to block                                                                                                                   |
+| `whenCreated`    | Timestamp when the row was created                                                                                                             |
+| `whenDeleted`    | Soft-delete; if set, the row will still be validated, but only considered a match if within the retention period defined by `RetentionPeriod`. |
 
 ## Remarks
-- This connector is designed to connect to an a CSV file that is located on-premises. Optionally you can also configure this to use cloud storage. However, the connector currently isn't desgined for this and needs additional configuration.
+
+- This connector uses a local CSV file as storage and source of truth.
+- The columns `whenCreated`, `whenUpdated`, and `whenDeleted` are fixed in the code.
+  > These fields are **not available in fieldMapping** by design.
+- Multiple rows per attribute and per employee are supported.
 
 ## Getting help
-> _For more information on how to configure a HelloID PowerShell connector, please refer to our [documentation](https://docs.helloid.com/hc/en-us/articles/360012558020-Configure-a-custom-PowerShell-target-system) pages_
 
-> _If you need help, feel free to ask questions on our [forum](https://forum.helloid.com)_
+> [!TIP]  
+> _For more information on how to configure a HelloID PowerShell connector, please refer to our [documentation](https://docs.helloid.com/en/provisioning/target-systems/powershell-v2-target-systems.html) pages_.
+
+> [!TIP]  
+> _If you need help, feel free to ask questions on our [forum](https://forum.helloid.com)_.
 
 ## HelloID docs
+
 The official HelloID documentation can be found at: https://docs.helloid.com/

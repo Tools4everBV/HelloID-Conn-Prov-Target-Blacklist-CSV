@@ -2,10 +2,10 @@
     {
         "key": "CsvPath",
         "type": "input",
-        "defaultValue": "",
+        "defaultValue": "C:\\HelloID\\blocklist.csv",
         "templateOptions": {
             "label": "CSV File Path",
-            "placeholder": "C:\\HelloID\\blacklist.csv",
+            "placeholder": "C:\\HelloID\\blocklist.csv",
             "description": "The path to the CSV file to export the data to",
             "required": true
         }
@@ -13,7 +13,7 @@
     {
         "key": "Delimiter",
         "type": "input",
-        "defaultValue": "",
+        "defaultValue": ",",
         "templateOptions": {
             "label": "Delimiter",
             "placeholder": ",",
@@ -24,7 +24,7 @@
     {
         "key": "Encoding",
         "type": "input",
-        "defaultValue": "",
+        "defaultValue": "utf8",
         "templateOptions": {
             "label": "Encoding",
             "placeholder": "utf8",
@@ -33,13 +33,14 @@
         }
     },
     {
-        "key": "isDebug",
-        "type": "checkbox",
-        "defaultValue": false,
+        "key": "RetentionPeriod",
+        "type": "input",
+        "defaultValue": "365",
         "templateOptions": {
-            "label": "Toggle debug logging",
-            "description": "When toggled, debug logging will be displayed",
-            "required": false
+            "label": "RetentionPeriod (days)",
+            "placeholder": "365",
+            "description": "Retention period in days. This is the amount of days the value should remain blocked after it is deleted. Use 999999 if no retention period applies.",
+            "required": true
         }
     }
 ]
